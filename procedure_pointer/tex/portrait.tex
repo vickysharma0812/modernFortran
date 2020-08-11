@@ -1,0 +1,171 @@
+% !TeX spellcheck = en_US
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Class options                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Orientation:                         %
+% portrait (default), landscape        %
+%                                      %
+% Paper size:                          %
+% a0paper (default), a1paper, a2paper, %
+% a3paper, a4paper, a5paper, a6paper   %
+%                                      %
+% Language:                            %
+% english (default), norsk             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{uioposter}
+
+
+\usepackage{lipsum}                                % Dummy text
+\usepackage[figwidth = 0.98\linewidth]{todonotes}  % Dummy image (and more!)
+\usepackage[absolute, overlay]{textpos}            % Figure placement
+\setlength{\TPHorizModule}{\paperwidth}
+\setlength{\TPVertModule}{\paperheight}
+\usepackage{listings}
+
+
+\title{Understanding Procedure Pointers in Modern Fortran}
+\author
+{%
+    Vikas Sharma \inst{1}
+    %\and
+    %Second Author\inst{2}
+    %\and
+    %Third Author\inst{1}
+}
+%% Optional:
+\institute
+{
+    \inst{1} Civil Engineering Department \\
+    IIT Bombay, Mumbai, India
+    %\and
+    %\inst{2} Department of Informatics
+}
+% Or:
+%\institute{Contact information}
+
+
+%% Remove footline:
+\setbeamertemplate{footline}{}
+
+
+\begin{document}
+\begin{columns}[onlytextwidth]
+
+
+\begin{column}{0.5\textwidth - 1.5cm}
+    \begin{block}{Introduction}
+	Procedure pointers are new addition to Modern Fortran. In a loose sense, it facilitates the use of function as variables. To understand them consider the following.
+
+		(1) Ask use for some input, let's say \verb|n|
+		\\
+		(2) If \verb|n| equals to 1 then evaluate a function called \verb|func_1|
+		and display its content
+		\\
+		(3) If \verb|n| equals to 2 then evaluate a function called \verb|func_2|
+		and display its content
+		\\
+		\textit{I think, now you have got the idea about what we want to do. Here,
+		ignore the simplicity of the present problem and focus on the intent.}
+    \end{block}
+
+	\begin{block}{How to define procedure pointers}
+		\begin{verbatim}
+			PROCEDURE( func ), POINTER :: f => NULL()
+		\end{verbatim}
+
+		Here \verb|func| denotes an abstract function (think it like a template) which informs the compiler about  the argument of the function and its results. An interface for \verb|func| is usually described by using \verb|INTERFACE| block or \verb|ABSTRACT INTERFACE| block. See the example given below:
+
+		\begin{verbatim}
+			ABSTRACT INTERFACE
+			PURE FUNCTION func( x ) RESULT( Ans )
+			IMPORT :: DFP
+			REAL( DFP ), INTENT( IN ) :: x
+			REAL( DFP ) :: Ans
+			END FUNCTION func
+			END INTERFACE
+		\end{verbatim}
+	\end{block}
+
+\begin{block}{Application}
+	Interestingly, I have used procedure pointers for developing an automatic differentiation library. We can also use procedure pointers to pass functions and subroutine to another routines. I would like to cover these advance topics in the upcoming posts.
+\end{block}
+
+    %\begin{exampleblock}{Does it come in black?}
+     %   Sure, use an \textbf{exampleblock}!
+    %\end{exampleblock}
+
+    %\begin{alertblock}{How do you make it pop?}
+     %   Use an \alert{alertblock}!
+    %\end{alertblock}
+
+    %\begin{block}{Results}
+     %   \lipsum[2]
+       % \missingfigure{Striking imagery relevant to the research}
+        %\unskip
+    %\end{block}
+\end{column}
+
+
+\begin{column}{0.5\textwidth - 1.5cm}
+    \begin{block}{Code}
+    	\begin{verbatim}
+    	PROGRAM main
+    	USE, INTRINSIC :: ISO_FORTRAN_ENV, &
+    	& ONLY : DFP=>real64, I4B=>int32
+    	IMPLICIT NONE
+
+    	ABSTRACT INTERFACE
+    	PURE FUNCTION func( x ) RESULT( Ans )
+    	IMPORT :: DFP
+    	REAL( DFP ), INTENT( IN ) :: x
+    	REAL( DFP ) :: Ans
+    	END FUNCTION func
+    	END INTERFACE
+
+    	PROCEDURE( func ), POINTER :: f => NULL()
+    	INTEGER( I4B ) :: n
+
+    	WRITE( *, "(A)", ADVANCE="NO" ) &
+    		& "Enter the value of case (n) :: "
+    	READ( *, * ) n
+
+    	SELECT CASE( n )
+    	CASE( 1 )
+    	f => func_1
+    	CASE( 2 )
+    	f => func_2
+    	CASE( 3 )
+    	f =>  func_3
+    	CASE DEFAULT
+    	f => func_1
+    	END SELECT
+
+    	WRITE( *, * ) f( 2.0_DFP )
+
+    	CONTAINS
+    	PURE FUNCTION func_1( x ) RESULT( Ans )
+    	REAL( DFP ), INTENT( IN ) :: x
+    	REAL( DFP ) :: Ans
+    	Ans = SIN( x )
+    	END FUNCTION func_1
+
+    	PURE FUNCTION func_2( x ) RESULT( Ans )
+    	REAL( DFP ), INTENT( IN ) :: x
+    	REAL( DFP ) :: Ans
+    	Ans = COS( x )
+    	END FUNCTION func_2
+
+    	PURE FUNCTION func_3( x ) RESULT( Ans )
+    	REAL( DFP ), INTENT( IN ) :: x
+    	REAL( DFP ) :: Ans
+    	Ans = TAN( x )
+    	END FUNCTION func_3
+    	END PROGRAM main
+    	\end{verbatim}
+    \end{block}
+\end{column}
+
+
+\end{columns}
+
+\end{document}
